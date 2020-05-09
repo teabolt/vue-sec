@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Vue Sec</title>
+  <link rel="stylesheet" type="text/css" href="./styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+</head>
+<body>
+  <div id="app">
+    <div id="new-review">
+      <span>New Review:</span>
+      <form>
+        <ul class="form-items">
+          <li class="form-item">
+            <label for="title">Title:</label>
+            <input
+              v-model="reviewTitle"
+              type="text"
+              id="review-title"
+              name="title"
+              required="true"
+              maxlength="20"
+            >    
+          </li>
+          <li class="form-item">
+            <label for="message">Message:</label>
+            <textarea
+              v-model="reviewMessage"
+              id="review-message"
+              name="message"
+              required="true"
+              rows="6"
+            >
+            </textarea>
+          </li>
+          <li class="form-item">
+            <button v-on:click.prevent="onSubmit">Add review</button>
+            <span v-if="error" class="error">{{ error }}</span>
+          </li>
+        </ul>
+      </form>
+    </div>
+    <div id="reviews">
+      <span>All Reviews:</span>
+      <ul v-if="reviews.length" class="review-items">
+        <li v-for="review in reviews" class="review-item">
+          <div class="review">
+            <div class="title">
+              {{ review.title }}
+            </div>
+            <div class="message">
+              <span v-html="review.message"></span>
+            </div>
+          </div>
+        </li>
+      </ul>
+      <p v-else>No reviews for now...</p>
+    </div>
+  </div>
+
+  <script>
+    function save(state) {
+      localStorage.setItem('state', JSON.stringify(state));
+    }
+
+    function load() {
+      let state = localStorage.getItem('state');
+      if (state) {
+        return JSON.parse(state);
+      }
+      return state;
+    }
+
+    function getInitialReviews() {
+      let reviews = load();
+      if (!reviews) {
+        return [];
+      }
+      return reviews;
+    }
+
+    var vm = new Vue({
+      el: "#app",
+      data: {
+          error: "",
+          reviewTitle: "",
+          reviewMessage: "",
+          reviews: getInitialReviews(),
+      },
+      methods: {
+        onSubmit: function (event) {
+          if (!this.reviewTitle) {
+            this.error = "Missing value for title";
+          } else if (!this.reviewMessage) {
+            this.error = "Missing value for message";
+          } else {
+            this.error = "";
+          }
+
+          if (this.error) {
+            return;
+          }
+
+          this.reviews.push({
+            title: this.reviewTitle,
+            message: this.reviewMessage,
+          });
+          save(this.reviews);
+        },
+      },
+    });
+  </script>
+</body>
+</html>
