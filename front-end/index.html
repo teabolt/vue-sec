@@ -43,7 +43,7 @@
     </div>
     <div id="reviews">
       <span>All Reviews:</span>
-      <ul v-if="reviews.length" class="review-items">
+      <ul v-if="reviews && reviews.length" class="review-items">
         <li v-for="review in reviews" class="review-item">
           <div class="review">
             <div class="title">
@@ -60,24 +60,39 @@
   </div>
 
   <script>
-    function save(state) {
-      localStorage.setItem('state', JSON.stringify(state));
+    const reviewsUrl = 'http://127.0.0.1:3000/';
+
+    async function getReviews() {
+      try {
+        const res = await fetch(reviewsUrl);
+        if (!res.ok) {
+            // TODO: replace console errors with info text
+            console.error(res);
+          }
+        const data = await res.json();
+        return data;
+      } catch (error) {
+        console.error(error);
+      }
     }
 
-    function load() {
-      let state = localStorage.getItem('state');
-      if (state) {
-        return JSON.parse(state);
+    async function newReview(review) {
+      try {
+        const res = await fetch(reviewsUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `title=${encodeURIComponent(review.title)}` +
+                  `&message=${encodeURIComponent(review.message)}`,
+        });
+        if (!res.ok) {
+          console.error(res);
+        }
+        return res;
+      } catch (error) {
+        console.error(error);
       }
-      return state;
-    }
-
-    function getInitialReviews() {
-      let reviews = load();
-      if (!reviews) {
-        return [];
-      }
-      return reviews;
     }
 
     var vm = new Vue({
@@ -86,10 +101,10 @@
           error: "",
           reviewTitle: "",
           reviewMessage: "",
-          reviews: getInitialReviews(),
+          reviews: null,
       },
       methods: {
-        onSubmit: function (event) {
+        onSubmit: async function (event) {
           if (!this.reviewTitle) {
             this.error = "Missing value for title";
           } else if (!this.reviewMessage) {
@@ -102,12 +117,15 @@
             return;
           }
 
-          this.reviews.push({
+          newReview({
             title: this.reviewTitle,
             message: this.reviewMessage,
           });
-          save(this.reviews);
+          this.reviews = await getReviews();
         },
+      },
+      async mounted () {
+        this.reviews = await getReviews();
       },
     });
   </script>
