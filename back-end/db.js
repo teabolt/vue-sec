@@ -10,6 +10,7 @@ const connection = mysql.createConnection({
   user: env.dbUser,
   password: env.dbPassword,
   database: env.dbDatabase,
+  multipleStatements: true,
 });
 
 // We must use a promise wrapper for the callback-based mysql library
@@ -38,8 +39,9 @@ async function getReviews() {
 async function addReview(review) {
   try {
     // SET is part of MySQL insert syntax.
+    const {title, description} = review;
     const res = await query(
-        'INSERT INTO reviews SET ?',
+        `INSERT INTO reviews SET \`title\` = '${title}', \`description\` = '${description}'`,
         review,
     );
     return res;
