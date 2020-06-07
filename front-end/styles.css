@@ -1,6 +1,11 @@
+.error {
+  color: red;
+}
+
 #app {
   width: 90%;
   margin: auto;
+  margin-top: 1rem;
 }
 
 #new-review {
@@ -28,7 +33,6 @@
 
 #new-review .error {
   margin-top: 0.75rem;
-  color: red;
 }
 
 #reviews .review-items {

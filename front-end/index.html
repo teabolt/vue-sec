@@ -8,6 +8,7 @@
 </head>
 <body>
   <div id="app">
+    <span v-if="networkError" class="error">{{ networkError }}</span>
     <div id="new-review">
       <span>New Review:</span>
       <form>
@@ -24,11 +25,11 @@
             >    
           </li>
           <li class="form-item">
-            <label for="message">Message:</label>
+            <label for="description">Message:</label>
             <textarea
               v-model="reviewMessage"
-              id="review-message"
-              name="message"
+              id="review-description"
+              name="description"
               required="true"
               rows="6"
             >
@@ -49,8 +50,8 @@
             <div class="title">
               {{ review.title }}
             </div>
-            <div class="message">
-              {{ review.message }}
+            <div class="description">
+              {{ review.description }}
             </div>
           </div>
         </li>
@@ -63,52 +64,43 @@
     const reviewsUrl = 'http://127.0.0.1:3000/';
 
     async function getReviews() {
-      try {
-        const res = await fetch(reviewsUrl);
-        if (!res.ok) {
-            // TODO: replace console errors with info text
-            console.error(res);
-          }
-        const data = await res.json();
-        return data;
-      } catch (error) {
-        console.error(error);
-      }
+      const res = await fetch(reviewsUrl);
+      if (!res.ok) {
+          return Promise.Reject(res.status);
+        }
+      return await res.json();;
     }
 
     async function newReview(review) {
-      try {
-        const res = await fetch(reviewsUrl, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/x-www-form-urlencoded',
-            },
-            body: `title=${encodeURIComponent(review.title)}` +
-                  `&message=${encodeURIComponent(review.message)}`,
-        });
-        if (!res.ok) {
-          console.error(res);
-        }
-        return res;
-      } catch (error) {
-        console.error(error);
+      const res = await fetch(reviewsUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: `title=${encodeURIComponent(review.title)}` +
+                `&description=${encodeURIComponent(review.description)}`,
+      });
+      if (!res.ok) {
+        return Promise.Reject(res.status);
       }
+      return res;
     }
 
     var vm = new Vue({
       el: "#app",
       data: {
-          error: "",
           reviewTitle: "",
           reviewMessage: "",
           reviews: null,
+          error: "",
+          networkError: "",
       },
       methods: {
         onSubmit: async function (event) {
           if (!this.reviewTitle) {
             this.error = "Missing value for title";
           } else if (!this.reviewMessage) {
-            this.error = "Missing value for message";
+            this.error = "Missing value for description";
           } else {
             this.error = "";
           }
@@ -117,15 +109,28 @@
             return;
           }
 
-          newReview({
-            title: this.reviewTitle,
-            message: this.reviewMessage,
-          });
-          this.reviews = await getReviews();
+          try {
+            newReview({
+              title: this.reviewTitle,
+              description: this.reviewMessage,
+            });
+          } catch (error) {
+            this.networkError = String(error);
+          }
+
+          try {
+            this.reviews = await getReviews();
+          } catch (error) {
+            this.networkError = String(error);
+          }
         },
       },
       async mounted () {
-        this.reviews = await getReviews();
+        try {
+          this.reviews = await getReviews();
+        } catch (error) {
+          this.networkError = String(error);
+        }
       },
     });
   </script>
