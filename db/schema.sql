@@ -1,4 +1,4 @@
-CREATE DATABASE vuesec;
+CREATE DATABASE IF NOT EXISTS vuesec;
 
 USE vuesec;
 
